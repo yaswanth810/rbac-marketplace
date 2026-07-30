@@ -49,6 +49,14 @@ export interface InvestmentRow {
   status: string;
   payment_method: string | null;
   created_at: Date;
+  // Enriched fields (joined)
+  asset_name: string | null;
+  token_symbol: string | null;
+  token_decimals: number | null;
+  token_price: string | null;
+  mint_tx_hash: string | null;
+  whitelist_tx_hash: string | null;
+  token_amount: string | null;  // raw wei amount minted
 }
 
 // ── Re-export BlockchainError so route handlers can import from one place ─────
@@ -349,10 +357,28 @@ export async function getInvestment(
 
   const rows = await prisma.$queryRaw<InvestmentRow[]>(
     Prisma.sql`
-      SELECT i.id, i.asset_id, i.investor_id,
-             i.amount::text, i.status, i.payment_method, i.created_at
+      SELECT
+        i.id,
+        i.asset_id,
+        i.investor_id,
+        i.amount::text,
+        i.status,
+        i.payment_method,
+        i.created_at,
+        a.name                                      AS asset_name,
+        tk.symbol                                   AS token_symbol,
+        tk.decimals                                 AS token_decimals,
+        tk.price::text                              AS token_price,
+        (al.new_state->>'mintTxHash')               AS mint_tx_hash,
+        (al.new_state->>'whitelistTxHash')          AS whitelist_tx_hash,
+        (al.new_state->>'tokenAmount')              AS token_amount
       FROM   investments i
-      JOIN   assets      a ON i.asset_id = a.id
+      JOIN   assets      a   ON i.asset_id  = a.id
+      LEFT   JOIN tokens tk  ON tk.asset_id = a.id
+      LEFT   JOIN audit_logs al
+             ON  al.resource_type = 'investment'
+             AND al.resource_id   = i.id
+             AND al.action        = 'investment.confirmed'
       WHERE  i.id = ${id}::uuid
         AND  a.organization_id = ${organizationId}::uuid
         AND  (${isInvestorRole ? 'TRUE' : 'FALSE'}::boolean = false OR i.investor_id = ${requesterId}::uuid)
@@ -372,10 +398,28 @@ export async function listInvestments(
 
   return prisma.$queryRaw<InvestmentRow[]>(
     Prisma.sql`
-      SELECT i.id, i.asset_id, i.investor_id,
-             i.amount::text, i.status, i.payment_method, i.created_at
+      SELECT
+        i.id,
+        i.asset_id,
+        i.investor_id,
+        i.amount::text,
+        i.status,
+        i.payment_method,
+        i.created_at,
+        a.name                                      AS asset_name,
+        tk.symbol                                   AS token_symbol,
+        tk.decimals                                 AS token_decimals,
+        tk.price::text                              AS token_price,
+        (al.new_state->>'mintTxHash')               AS mint_tx_hash,
+        (al.new_state->>'whitelistTxHash')          AS whitelist_tx_hash,
+        (al.new_state->>'tokenAmount')              AS token_amount
       FROM   investments i
-      JOIN   assets      a ON i.asset_id = a.id
+      JOIN   assets      a   ON i.asset_id  = a.id
+      LEFT   JOIN tokens tk  ON tk.asset_id = a.id
+      LEFT   JOIN audit_logs al
+             ON  al.resource_type = 'investment'
+             AND al.resource_id   = i.id
+             AND al.action        = 'investment.confirmed'
       WHERE  a.organization_id = ${organizationId}::uuid
         AND  (${isInvestorRole ? 'TRUE' : 'FALSE'}::boolean = false OR i.investor_id = ${requesterId}::uuid)
       ORDER  BY i.created_at DESC
