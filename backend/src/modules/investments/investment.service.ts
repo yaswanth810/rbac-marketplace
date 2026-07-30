@@ -51,7 +51,7 @@ export interface InvestmentRow {
   created_at: Date;
   // Enriched fields (joined)
   asset_name: string | null;
-  token_symbol: string | null;
+  token_symbol: string | null;   // maps to tokens.token_symbol
   token_decimals: number | null;
   token_price: string | null;
   mint_tx_hash: string | null;
@@ -366,7 +366,7 @@ export async function getInvestment(
         i.payment_method,
         i.created_at,
         a.name                                      AS asset_name,
-        tk.symbol                                   AS token_symbol,
+        tk.token_symbol                             AS token_symbol,
         tk.decimals                                 AS token_decimals,
         tk.price::text                              AS token_price,
         (al.new_state->>'mintTxHash')               AS mint_tx_hash,
@@ -407,7 +407,7 @@ export async function listInvestments(
         i.payment_method,
         i.created_at,
         a.name                                      AS asset_name,
-        tk.symbol                                   AS token_symbol,
+        tk.token_symbol                             AS token_symbol,
         tk.decimals                                 AS token_decimals,
         tk.price::text                              AS token_price,
         (al.new_state->>'mintTxHash')               AS mint_tx_hash,
