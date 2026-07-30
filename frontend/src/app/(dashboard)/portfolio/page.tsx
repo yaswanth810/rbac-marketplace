@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '@/lib/api';
 import { useAuth } from '@/contexts/auth';
-import { isInvestorRole } from '@/lib/permissions';
-import { Card, CardHeader } from '@/components/ui/Card';
+import { hasPermission, isInvestorRole } from '@/lib/permissions';
+import { Card } from '@/components/ui/Card';
 import { InvestmentStatusBadge } from '@/components/ui/Badge';
 import { PageSpinner, ErrorMessage, EmptyState } from '@/components/ui/Spinner';
 import { WalletConnect } from '@/components/WalletConnect';
@@ -24,18 +24,40 @@ export default function PortfolioPage() {
   const { user } = useAuth();
   const permissions = user?.permissions ?? [];
   const isInvestor = isInvestorRole(permissions);
+  const canApprove = hasPermission(permissions, 'investment.approve');
 
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [approving, setApproving] = useState<string | null>(null);
+  const [approveError, setApproveError] = useState<Record<string, string>>({});
 
-  useEffect(() => {
+  const loadInvestments = () => {
+    setLoading(true);
     api.get<Investment[]>('/api/investments')
       .then(setInvestments)
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadInvestments();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleApprove = async (invId: string) => {
+    setApproving(invId);
+    setApproveError((prev) => ({ ...prev, [invId]: '' }));
+    try {
+      await api.post(`/api/investments/${invId}/approve`, {});
+      loadInvestments();
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Approval failed';
+      setApproveError((prev) => ({ ...prev, [invId]: msg }));
+    } finally {
+      setApproving(null);
+    }
+  };
 
   const pageTitle = isInvestor ? 'My Portfolio' : 'Investments';
   const emptyMsg = isInvestor
@@ -78,9 +100,23 @@ export default function PortfolioPage() {
                     {new Date(inv.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <InvestmentStatusBadge status={inv.status} />
+                <div className="flex items-center gap-3">
+                  <InvestmentStatusBadge status={inv.status} />
+                  {canApprove && inv.status === 'pending' && (
+                    <button
+                      onClick={() => handleApprove(inv.id)}
+                      disabled={approving === inv.id}
+                      className="rounded px-3 py-1 text-xs font-semibold bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white transition-colors"
+                    >
+                      {approving === inv.id ? 'Approving…' : 'Approve'}
+                    </button>
+                  )}
+                </div>
               </div>
 
+              {approveError[inv.id] && (
+                <p className="mt-2 text-xs text-red-400">{approveError[inv.id]}</p>
+              )}
               {inv.status === 'confirmed' && (
                 <p className="mt-2 text-xs font-medium text-green-400">
                   ✓ Token allocation confirmed. Check Audit Log for on-chain transaction hashes.
@@ -98,3 +134,4 @@ export default function PortfolioPage() {
     </div>
   );
 }
+
