@@ -16,7 +16,7 @@
  * (requirePermission already refreshed request.user.permissions).
  */
 
-import { type FastifyInstance } from 'fastify';
+import { type FastifyInstance, type FastifyReply } from 'fastify';
 import { Prisma } from '@prisma/client';
 import { requirePermission } from '../hooks/requirePermission.js';
 import {
@@ -32,7 +32,7 @@ import { AppError } from '../modules/assets/asset.service.js';
 // ── Error → reply helper ───────────────────────────────────────────────────────
 
 function sendError(
-  reply: Parameters<Parameters<FastifyInstance['post']>[2]>[1],
+  reply: FastifyReply,
   err: unknown
 ): ReturnType<typeof reply.send> {
   if (err instanceof AppError) {

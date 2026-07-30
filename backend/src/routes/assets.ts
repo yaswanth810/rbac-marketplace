@@ -21,7 +21,7 @@
  * • Wrong-stage attempts return 409 Conflict, not 403.
  */
 
-import { type FastifyInstance } from 'fastify';
+import { type FastifyInstance, type FastifyReply } from 'fastify';
 import { Prisma } from '@prisma/client';
 import { requirePermission, assertOrgAccess } from '../hooks/requirePermission.js';
 import {
@@ -39,7 +39,7 @@ import {
 // ── Error → reply helper ───────────────────────────────────────────────────────
 
 function sendError(
-  reply: Parameters<Parameters<FastifyInstance['post']>[2]>[1],
+  reply: FastifyReply,
   err: unknown
 ): ReturnType<typeof reply.send> {
   if (err instanceof AppError) {

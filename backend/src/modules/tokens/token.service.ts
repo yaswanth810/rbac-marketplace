@@ -187,10 +187,10 @@ export async function addToWhitelistOnChain(
   const contract = new ethers.Contract(contractAddress, abi, deployer);
 
   try {
-    const isWhitelisted = (await contract['whitelist'](walletAddress)) as boolean;
+    const isWhitelisted = (await contract['whitelist']!(walletAddress)) as boolean;
     if (isWhitelisted) return { txHash: null };
 
-    const tx = (await contract['addToWhitelist'](walletAddress)) as ethers.TransactionResponse;
+    const tx = (await contract['addToWhitelist']!(walletAddress)) as ethers.TransactionResponse;
     const receipt = await tx.wait(1);
     return { txHash: receipt?.hash ?? tx.hash };
   } catch (err) {
@@ -219,7 +219,7 @@ export async function mintOnChain(
   const contract = new ethers.Contract(contractAddress, abi, deployer);
 
   try {
-    const tx = (await contract['mint'](recipientWallet, amount)) as ethers.TransactionResponse;
+    const tx = (await contract['mint']!(recipientWallet, amount)) as ethers.TransactionResponse;
     const receipt = await tx.wait(1);
     return { txHash: receipt?.hash ?? tx.hash };
   } catch (err) {
@@ -459,7 +459,7 @@ export async function mintTokens(
   const deployer  = getDeployerForChain(token.chain_id, provider);
   const contract  = new ethers.Contract(token.contract_address, abi, deployer);
 
-  const isWhitelisted = (await contract['whitelist'](recipient.wallet_address)) as boolean;
+  const isWhitelisted = (await contract['whitelist']!(recipient.wallet_address)) as boolean;
   if (!isWhitelisted) {
     throw new AppError(
       409,
