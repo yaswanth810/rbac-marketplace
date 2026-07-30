@@ -30,8 +30,11 @@ interface Investment {
 function formatTokens(weiStr: string | null, decimals: number | null, symbol: string | null): string {
   if (!weiStr || decimals == null) return '—';
   try {
-    const whole = BigInt(weiStr) / (10n ** BigInt(decimals));
-    return `${Number(whole).toLocaleString()} ${symbol ?? 'tokens'}`;
+    // String-based integer division: avoid BigInt literals (tsconfig targets < ES2020)
+    // e.g. "1000000000000000000000" with decimals=18 → "1000"
+    const padded = weiStr.padStart(decimals + 1, '0');
+    const wholeStr = padded.slice(0, padded.length - decimals) || '0';
+    return `${Number(wholeStr).toLocaleString()} ${symbol ?? 'tokens'}`;
   } catch {
     return '—';
   }
