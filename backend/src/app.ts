@@ -40,8 +40,13 @@ export async function buildApp(): Promise<FastifyInstance> {
 
   // ─── Core Plugins ──────────────────────────────────────────────────────────
 
+  const allowedOrigins = process.env['CORS_ORIGIN']
+    ?.split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+
   await app.register(cors, {
-    origin: process.env['CORS_ORIGIN']?.split(',') ?? '*',
+    origin: allowedOrigins?.length ? allowedOrigins : '*',
     credentials: true,
   });
 
