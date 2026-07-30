@@ -1,0 +1,19 @@
+{
+  "name": "@rbac-marketplace/database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "migrate": "tsx migrate.ts",
+    "seed": "tsx seed.ts",
+    "migrate:seed": "tsx migrate.ts && tsx seed.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/pg": "^8.11.6",
+    "dotenv": "^16.4.5",
+    "pg": "^8.12.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3"
+  }
+}

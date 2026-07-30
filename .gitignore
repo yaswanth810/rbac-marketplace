@@ -1,0 +1,55 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
+dist/
+build/
+out/
+.next/
+
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+# Keep .env.example committed
+!**/.env.example
+
+# ── Hardhat / Solidity ────────────────────────────────────────────────────────
+artifacts/
+cache/
+typechain-types/
+# Exception: keep the compiled RWAToken artifact in git so the backend
+# can load the ABI/bytecode in production without a compile step.
+!contracts/artifacts/
+!contracts/artifacts/**
+
+
+# ── Prisma ────────────────────────────────────────────────────────────────────
+backend/prisma/migrations/*
+!backend/prisma/migrations/.gitkeep
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Coverage ──────────────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+*.tsbuildinfo

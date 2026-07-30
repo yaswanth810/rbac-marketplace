@@ -1,0 +1,6 @@
+// Route modules are registered in app.ts via app.register().
+// Planned route modules for later phases:
+//   - auth.ts          — POST /login, POST /register, POST /refresh
+//   - users.ts         — CRUD for user accounts
+//   - roles.ts         — RBAC role and permission management
+//   - tokens.ts        — Tokenized asset marketplace endpoints

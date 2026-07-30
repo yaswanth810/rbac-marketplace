@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global CSS resets and design tokens go here.
+   Tailwind custom properties can be defined in tailwind.config.ts. */

@@ -1,0 +1,139 @@
+// This is your Prisma schema file.
+// Reference: https://pris.ly/d/prisma-schema
+//
+// IMPORTANT: Schema is managed via raw SQL in /database/migrations/.
+// Prisma is used for type-safe DB access ONLY — never run `prisma migrate`.
+// After updating this file, run `prisma generate` (no DB changes).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Organization & Department ─────────────────────────────────────────────
+
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  departments Department[]
+  users       User[]
+  roles       Role[]
+  assets      Asset[]
+
+  @@map("organizations")
+}
+
+model Department {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String @map("organization_id") @db.Uuid
+  name           String
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  users        User[]
+
+  @@map("departments")
+}
+
+// ─── Users ─────────────────────────────────────────────────────────────────
+// kyc_status values: pending | submitted | approved | rejected
+// status values:     active  | inactive  | suspended
+
+model User {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  departmentId  String?   @map("department_id") @db.Uuid
+  name          String
+  email         String    @unique
+  passwordHash  String    @map("password_hash")
+  walletAddress String?   @unique @map("wallet_address")
+  kycStatus     String    @default("pending") @map("kyc_status")
+  status        String    @default("active")
+  lastLogin     DateTime? @map("last_login")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  userRoles    UserRole[]
+  assets       Asset[]      @relation("AssetIssuer")
+
+  @@map("users")
+}
+
+// ─── RBAC ──────────────────────────────────────────────────────────────────
+// organization_id = NULL  →  platform-level system role (is_system_role = true)
+// organization_id = <id>  →  org-scoped custom role
+
+model Role {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String? @map("organization_id") @db.Uuid
+  name           String
+  isSystemRole   Boolean @default(false) @map("is_system_role")
+
+  organization    Organization?    @relation(fields: [organizationId], references: [id])
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id  String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key String @unique
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+// ─── Assets ────────────────────────────────────────────────────────────────
+// asset_type values: real_estate | equity | bond | commodity | fund | other
+// status values:     draft | submitted | under_review | approved | rejected | tokenized | listed
+// metadata JSONB folds KYC/AML/payment hints per spec
+
+model Asset {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  assetType      String   @map("asset_type")
+  description    String?
+  status         String   @default("draft")
+  issuerId       String   @map("issuer_id") @db.Uuid
+  jurisdiction   String?
+  currency       String?  @db.Char(3)
+  totalValue     Decimal? @map("total_value") @db.Decimal(20, 6)
+  metadata       Json     @default(dbgenerated("'{}'::jsonb"))
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  issuer       User         @relation("AssetIssuer", fields: [issuerId], references: [id])
+
+  @@map("assets")
+}

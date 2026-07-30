@@ -1,0 +1,95 @@
+version: '3.9'
+
+# ─── Enterprise RBAC & Tokenization Marketplace ──────────────────────────────
+#
+# Services:
+#   postgres  — PostgreSQL 16 (data volume persisted)
+#   backend   — Fastify API on port 3001 (bind-mounted source, tsx watch)
+#   frontend  — Next.js 14 on port 3000 (bind-mounted source, next dev)
+#
+# First-run (run once after clone, before `docker compose up`):
+#   docker compose up -d postgres
+#   cd database && npx tsx migrate.ts && npx tsx seed.ts
+#
+# Prerequisites (files must exist before `docker compose up`):
+#   backend/.env      (copy from backend/.env.example)
+#   frontend/.env.local  (copy from frontend/.env.local.example)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16
+    container_name: rbac_marketplace_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rbac_user
+      POSTGRES_PASSWORD: rbac_password
+      POSTGRES_DB: rbac_marketplace
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rbac_user -d rbac_marketplace"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Backend API ─────────────────────────────────────────────────────────────
+  backend:
+    image: node:20-alpine
+    container_name: rbac_marketplace_backend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./backend:/app
+      # Prevent host node_modules from overwriting container's installed modules
+      - backend_node_modules:/app/node_modules
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      HOST: 0.0.0.0
+      # Override DATABASE_URL to use the Docker service name, not localhost
+      # Note: internal port is still 5432 (host mapping is 5433 but irrelevant inside Docker)
+      DATABASE_URL: postgresql://rbac_user:rbac_password@postgres:5432/rbac_marketplace
+      # Remaining vars loaded from env_file below; DATABASE_URL above takes precedence
+    env_file:
+      - ./backend/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend:
+    image: node:20-alpine
+    container_name: rbac_marketplace_frontend
+    working_dir: /app
+    command: sh -c "npm install && npm run dev"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    env_file:
+      - ./frontend/.env.local
+    depends_on:
+      - backend
+    restart: on-failure
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_node_modules:
+    driver: local
+  frontend_node_modules:
+    driver: local

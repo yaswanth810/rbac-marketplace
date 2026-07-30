@@ -1,0 +1,8 @@
+// Solidity contracts (.sol files) go here.
+// Planned contracts for later phases:
+//   - RBACRegistry.sol    — On-chain role/permission registry
+//   - MarketplaceToken.sol — ERC-20 or ERC-1155 tokenized asset
+//   - Marketplace.sol      — Listing, offer, and settlement logic
+//
+// All contracts should inherit from appropriate OpenZeppelin base contracts.
+// Example: import "@openzeppelin/contracts/access/AccessControl.sol";

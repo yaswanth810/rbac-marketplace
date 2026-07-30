@@ -1,0 +1,6 @@
+// Deployment scripts go here, executed via:
+//   npx hardhat run scripts/deploy.ts --network <network>
+//
+// Planned scripts:
+//   - deploy.ts   — Main deployment script
+//   - verify.ts   — Post-deployment Etherscan verification helper

@@ -1,0 +1,6 @@
+// Feature modules (services, repositories, DTOs) live here.
+// Planned modules for later phases:
+//   - auth/            — AuthService, token issuing logic
+//   - users/           — UserRepository, UserService
+//   - rbac/            — RoleRepository, PermissionService, policy evaluation
+//   - marketplace/     — TokenService, listing/offer logic

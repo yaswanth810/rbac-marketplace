@@ -1,0 +1,7 @@
+// TypeScript Hardhat tests go here.
+// Run with: npx hardhat test
+//
+// Planned test files:
+//   - RBACRegistry.test.ts
+//   - MarketplaceToken.test.ts
+//   - Marketplace.test.ts

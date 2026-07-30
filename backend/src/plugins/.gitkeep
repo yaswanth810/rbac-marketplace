@@ -1,0 +1,6 @@
+// Fastify plugins are registered here and decorated onto the app instance.
+// Examples of plugins to add in later phases:
+//   - prisma.ts        — PrismaClient singleton decorated as app.prisma
+//   - authenticate.ts  — JWT verification preHandler decorator
+//   - rateLimit.ts     — @fastify/rate-limit configuration
+//   - swagger.ts       — @fastify/swagger OpenAPI docs
